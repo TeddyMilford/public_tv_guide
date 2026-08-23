@@ -5,8 +5,7 @@ channels a night, two weeks to a page.
 
 You already picked these films. This decides which night each one is on.
 
-One page, no build step, no framework, no account. Plain HTML, one stylesheet, four
-ES modules, nothing loaded over the network.
+One page, no build step, no framework. Plain HTML, one stylesheet, four ES modules.
 
 Desktop only. Under 52rem the page is replaced by a clip of Ron Swanson at a computer
 and a line telling you to go and use one. The clip is `img/swanson.webp`, 1.0MB,
