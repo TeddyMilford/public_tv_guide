@@ -1,0 +1,303 @@
+/* Two type systems. The page chrome is system sans on white. The guide is set like a
+   printed listings page: condensed furniture, serif bodies, one red mark. Fills are
+   rules and outlines instead of solid black, which cuts the toner a printed month
+   costs by more than half. */
+
+:root {
+  --bg: #ffffff;
+  --ink: #111111;
+  --muted: #6b6b6b;
+  --rule: #d8d8d8;
+  --fill: #f6f6f6;
+  --red: #c8102e;
+  --sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --cond: "Arial Narrow", "Helvetica Neue Condensed", "Liberation Sans Narrow", Impact, sans-serif;
+  --serif: Georgia, "Times New Roman", Times, serif;
+  --prose: 44rem;
+  --page: 74rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+main { max-width: var(--page); margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+
+h1 { margin: 0 0 0.5rem; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0 0 0.75rem; }
+
+.sub, .note, .claim, .foot, .tail, .sample-cap { color: var(--muted); }
+.sub, .note, .tail p { max-width: var(--prose); }
+.note, .claim { font-size: 0.875rem; }
+
+a, .link {
+  color: var(--ink); background: none; border: 0; padding: 0; font: inherit;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.link:hover { color: var(--muted); }
+
+button {
+  font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--rule); padding: 0.3rem 0.6rem; cursor: pointer;
+}
+button:hover { background: var(--fill); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+input, select, textarea {
+  font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--rule); padding: 0.3rem 0.4rem;
+}
+.opt { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.875rem; }
+
+/* --------------------------------------------------------------- the phone */
+
+.gate { display: none; }
+
+@media (max-width: 52rem) {
+  main { display: none; }
+  .gate {
+    display: flex; flex-direction: column; justify-content: center;
+    min-height: 100vh; gap: 1.5rem; padding: 2rem;
+  }
+  .gate-clip {
+    display: block; width: 100%; max-width: 34rem; height: auto;
+    aspect-ratio: 580 / 323; object-fit: cover; background: var(--fill);
+  }
+  .gate p {
+    margin: 0; min-width: 0; max-width: 100%;
+    font-size: clamp(1.5rem, 7vw, 3rem);
+    line-height: 1.15; font-weight: 700; text-transform: uppercase;
+    overflow-wrap: break-word;
+  }
+}
+
+/* ------------------------------------------------------------- the five steps */
+
+.step { margin-top: 3.25rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+.step h2 {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin: 0 0 0.75rem; font-size: 1.125rem; font-weight: 600;
+}
+.step-n {
+  flex: 0 0 auto;
+  width: 1.6rem; height: 1.6rem;
+  border: 1px solid var(--ink); border-radius: 50%;
+  display: grid; place-items: center;
+  font: 500 0.8125rem/1 var(--sans);
+}
+.step h3 { margin: 0 0 0.2rem; font-size: 0.9375rem; font-weight: 600; }
+.step-alt { display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: 0.875rem; }
+
+.drop {
+  display: block; max-width: var(--prose);
+  border: 1px dashed var(--rule); padding: 1.25rem; cursor: pointer;
+}
+.drop:hover, .drop.hot { background: var(--fill); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop-label { font-size: 0.9375rem; }
+
+.sample-card {
+  max-width: 30rem; margin-top: 1.5rem;
+  border: 1px solid var(--rule); padding: 0.9rem 1rem 1rem;
+}
+.sample-cap {
+  margin: 0 0 0.6rem; font: 0.75rem/1 var(--sans);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.sample-card .night-block { margin-bottom: 0; }
+
+/* shows form */
+
+#appt-form { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: end; margin: 0 0 1rem; }
+.f { display: flex; flex-direction: column; gap: 0.2rem; }
+.f[hidden] { display: none; }   /* .f would otherwise beat the UA rule for [hidden] */
+.f label { font-size: 0.75rem; color: var(--muted); }
+.f-check, .f-submit { justify-content: end; }
+.f-check label { color: var(--ink); }
+#f-title { width: 13rem; }
+#f-network { width: 9rem; }
+#f-runtime { width: 5rem; }
+
+#appt-list { list-style: none; margin: 0; padding: 0; font-size: 0.9375rem; max-width: var(--prose); }
+#appt-list li {
+  display: flex; gap: 1rem; justify-content: space-between;
+  padding: 0.45rem 0; border-top: 1px solid var(--rule);
+}
+#appt-list li.empty { color: var(--muted); font-size: 0.875rem; }
+.appt-meta { display: block; font-size: 0.8125rem; color: var(--muted); }
+
+/* themes */
+
+#themes {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.5rem; margin-bottom: 1.5rem;
+}
+.theme {
+  display: block; text-align: left; padding: 0.6rem 0.7rem;
+  border: 1px solid var(--rule); background: var(--bg); cursor: pointer;
+}
+.theme:hover { background: var(--fill); }
+.theme.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.theme-name {
+  display: block; font: 700 0.9375rem/1.2 var(--cond);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.theme.on .theme-name { color: var(--red); }
+.theme-note { display: block; font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+
+.fine { margin-top: 0.5rem; }
+.fine summary { cursor: pointer; font-size: 0.875rem; }
+.panel { margin-top: 1.25rem; max-width: var(--prose); }
+
+.channel, .night {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.35rem 0; border-top: 1px solid var(--rule); font-size: 0.875rem;
+}
+.channel .l-chan { width: 1.7em; }
+.night.off { color: var(--muted); }
+.night label { display: flex; gap: 0.35rem; align-items: center; flex: 0 0 7.5rem; }
+.night input[name="filter"] { flex: 1 1 auto; }
+.night-theme {
+  flex: 0 0 9rem; font: 700 0.6875rem/1 var(--cond);
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--red);
+}
+
+/* preview + print */
+
+.bar {
+  display: flex; flex-wrap: wrap; gap: 0.75rem 1rem;
+  align-items: baseline; justify-content: space-between;
+  padding-bottom: 0.6rem; border-bottom: 1px solid var(--rule);
+}
+.span-label { font-weight: 600; }
+.tools { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+
+.foot {
+  display: flex; justify-content: space-between; gap: 1rem;
+  font-size: 0.8125rem; border-top: 1px solid var(--rule); padding-top: 0.75rem;
+}
+
+.print-btn {
+  font: 600 1rem/1 var(--sans);
+  padding: 0.85rem 1.6rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.print-btn:hover { background: #000; }
+
+.tail { margin-top: 3.25rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); font-size: 0.875rem; }
+
+/* ------------------------------------------------------------- the listings */
+
+.spread {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 3rem; margin: 1.75rem 0 1rem;
+}
+.spread .week + .week { border-left: 1px solid var(--rule); padding-left: 3rem; margin-left: -3rem; }
+
+@media (max-width: 68rem) {
+  .spread { grid-template-columns: 1fr; gap: 2rem; }
+  .spread .week + .week { border-left: 0; padding-left: 0; margin-left: 0; }
+}
+
+.week { max-width: 34rem; }
+
+.week-head {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  margin: 0 0 0.5rem; padding-bottom: 0.15rem;
+  border-bottom: 1.5px solid var(--ink);
+  font: 700 1.0625rem/1.1 var(--cond);
+  text-transform: uppercase; letter-spacing: 0.02em;
+}
+.week-head .mark { color: var(--red); font-size: 1.375rem; letter-spacing: -0.01em; }
+
+.night-block { break-inside: avoid; margin-bottom: 0.8rem; }
+
+/* Bold caps between two rules instead of a reversed band. Same emphasis, less ink. */
+.night-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  margin: 0 0 0.3rem; padding: 0.1rem 0 0.12rem;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  font: 700 0.8125rem/1.35 var(--cond);
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+.theme-tag { font-weight: 400; letter-spacing: 0.05em; color: var(--red); }
+
+.listing {
+  display: grid; grid-template-columns: 2.9em 1.5em 1fr 1.1em;
+  gap: 0 0.4em; margin: 0 0 0.2rem;
+  font: 0.8125rem/1.35 var(--serif);
+}
+#guide.no-times .listing, .no-times .listing { grid-template-columns: 1.5em 1fr 1.1em; }
+#guide.no-times .l-time { display: none; }
+
+.l-time {
+  font: 700 0.8125rem/1.3 var(--cond);
+  text-align: right; font-variant-numeric: tabular-nums; padding-top: 0.05em;
+}
+.l-chan {
+  border: 1px solid var(--ink);
+  font: 700 0.6875rem/1.45 var(--cond);
+  text-align: center; height: 1.5em;
+}
+.l-head {
+  font-family: var(--cond); font-weight: 700; font-size: 0.875rem;
+  text-transform: uppercase; letter-spacing: 0.02em;
+}
+.listing.empty .l-txt, .night-block.dark .l-txt { color: var(--muted); font-style: italic; }
+.listing.watched .l-txt { color: var(--muted); }
+.listing.watched .l-head { text-decoration: line-through; }
+
+.l-off {
+  align-self: start; border: 0; background: none; padding: 0;
+  font: 400 0.875rem/1.2 var(--sans);
+  color: var(--rule); text-align: right; cursor: pointer;
+}
+.l-off:hover, .l-off:focus-visible { color: var(--red); background: none; }
+.listing.watched .l-off { color: var(--muted); }
+
+textarea { width: 100%; max-width: var(--prose); margin-top: 0.5rem; font-family: var(--serif); font-size: 0.8125rem; }
+
+/* ------------------------------------------------------------------- print */
+
+@media print {
+  .gate, .head, .tail, #step-import, #step-shows, #step-themes, #step-print,
+  #step-preview > h2, .bar, .foot, .l-off { display: none; }
+
+  main { display: block; max-width: none; padding: 0; }
+  body { font-size: 8pt; background: #fff; }
+  .step { margin: 0; padding: 0; border-top: 0; }
+
+  /* Two weeks to a page: one on the left half, the next on the right. */
+  .spread {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0 7mm; margin: 0;
+    break-inside: avoid; break-after: page;
+  }
+  .spread:last-of-type { break-after: auto; }
+  .spread .week + .week { border-left: 0.5pt solid #999; padding-left: 7mm; margin-left: -3.5mm; }
+  .week { max-width: none; }
+
+  .week-head { font-size: 12pt; border-bottom-width: 1pt; margin-bottom: 1.8mm; }
+  .week-head .mark { font-size: 14.5pt; color: #000; }
+  .night-block { margin-bottom: 1.9mm; }
+  .night-head {
+    font-size: 8.5pt; padding: 0 0 0.1mm;
+    border-top: 0.75pt solid #000; border-bottom: 0.25pt solid #999;
+  }
+  .theme-tag { color: #000; }
+  .listing { font-size: 8pt; line-height: 1.28; margin-bottom: 0.5mm; grid-template-columns: 3em 1.5em 1fr 0; }
+  .l-time { font-size: 8pt; }
+  .l-chan { font-size: 7pt; border-width: 0.4pt; }
+  .l-head { font-size: 8.75pt; }
+
+  @page { size: letter portrait; margin: 11mm; }
+}
