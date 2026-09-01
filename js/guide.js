@@ -236,7 +236,52 @@ export function channelFor(network, fallback = 4) {
 export const LANE_CHANNELS = [2, 4, 7, 9, 11, 13];
 export const channelForLane = lane => LANE_CHANNELS[lane % LANE_CHANNELS.length];
 
-export const DEFAULT_CHANNEL_TIMES = ['18:00', '19:00', '20:00'];
+// Two movies a night, at eight and ten: the feature and the late movie. Two is a
+// decision somebody made for you. Three is a grid.
+export const DEFAULT_CHANNEL_TIMES = ['20:00', '22:00'];
+
+// -------------------------------------------------------- where a show lands
+
+// A show is only worth adding if you actually watch it, so it airs on a night you
+// are likely to be home — Sunday through Thursday — at seven. Nights fill before
+// times do, so a second show gets its own night instead of crowding the first.
+export const HOME_NIGHTS = [0, 1, 2, 3, 4];
+export const SHOW_TIMES = ['19:00', '19:30', '20:00', '20:30'];
+
+// The repeat is the safety net. Saturday afternoon, which is both the classic slot
+// and the one place in the week that is always later than the premiere.
+export const RERUN_NIGHTS = [6];
+export const RERUN_TIMES = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+
+const slotGrid = (times, nights) => times.flatMap(time => nights.map(day => ({ day, time })));
+
+export const SHOW_SLOTS = slotGrid(SHOW_TIMES, HOME_NIGHTS);
+export const RERUN_SLOTS = slotGrid(RERUN_TIMES, RERUN_NIGHTS);
+
+const slotKey = (day, time) => `${Number(day)}|${time}`;
+
+// Walks the grid from `after`, so a new show takes the first free slot and moving one
+// takes the next slot along rather than the one it already sits in.
+function nextSlot(slots, busy, after) {
+  const taken = new Set(busy);
+  for (let i = 1; i <= slots.length; i++) {
+    const slot = slots[(after + i) % slots.length];
+    if (!taken.has(slotKey(slot.day, slot.time))) return slot;
+  }
+  return slots[(after + 1) % slots.length];   // every slot spoken for, so double up
+}
+
+export const showSlotIndex = (day, time) =>
+  SHOW_SLOTS.findIndex(s => s.day === Number(day) && s.time === time);
+
+export function nextShowSlot(appointments = [], after = -1) {
+  return nextSlot(SHOW_SLOTS, appointments.map(a => slotKey(a.day, a.time)), after);
+}
+
+export function nextRerunSlot(appointments = [], after = -1) {
+  const used = appointments.filter(a => a.rerun).map(a => slotKey(a.rerun.day, a.rerun.time));
+  return nextSlot(RERUN_SLOTS, used, after);
+}
 
 // Each night carries the lane times it airs. Older saved nights stored a film count
 // and a single start time, so convert those.

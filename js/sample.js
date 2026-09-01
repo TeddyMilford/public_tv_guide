@@ -37,6 +37,7 @@ export const SAMPLE_SHOW = {
   title: 'The Sopranos',
   network: 'HBO',
   day: 0,
-  time: '21:00',
+  time: '19:00',
   runtime: 55,
+  rerun: { day: 6, time: '13:00' },
 };

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TV Guide</title>
-<meta name="description" content="Turn a Letterboxd or IMDb watchlist export into a printable month of television. Three channels a night, two weeks to a page.">
+<meta name="description" content="Turn a Letterboxd or IMDb watchlist export into a printable month of television. Two movies a night, two weeks to a page.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -20,7 +20,7 @@
   <header class="head">
     <h1>TV Guide</h1>
     <p class="sub">
-      Your watchlist, printed as a month of television. Three channels a night, two
+      Your watchlist, printed as a month of television. Two movies a night, two
       weeks to a page.
     </p>
   </header>
@@ -52,8 +52,9 @@
   <section class="step" id="step-shows">
     <h2><span class="step-n">2</span> Add the shows you follow</h2>
     <p class="note">
-      As many as you want, on any night. No season or episode numbers. Add a rerun to
-      list a show twice in the same week.
+      Type a title. It goes out at seven on a night you are likely to be home, Sunday
+      through Thursday, and repeats Saturday afternoon in case you miss it. No season
+      or episode numbers, nothing to fill in.
     </p>
 
     <form id="appt-form">
@@ -62,21 +63,10 @@
         <datalist id="series-suggestions"></datalist></span>
       <span class="f"><label for="f-network">Channel or service</label>
         <input id="f-network" name="network" placeholder="HBO" autocomplete="off"></span>
-      <span class="f"><label for="f-day">Night</label>
-        <select id="f-day" name="day"></select></span>
-      <span class="f"><label for="f-time">Time</label>
-        <input id="f-time" name="time" type="time" value="21:00"></span>
-      <span class="f"><label for="f-runtime">Minutes</label>
-        <input id="f-runtime" name="runtime" type="number" min="5" max="240" value="60"></span>
-      <span class="f f-check"><label class="opt"><input type="checkbox" name="weekly" checked> Every week</label></span>
-      <span class="f f-check"><label class="opt"><input type="checkbox" name="hasRerun" id="f-hasrerun"> Add a rerun</label></span>
-      <span class="f rerun-fields" id="rerun-fields" hidden><label for="f-rerun-day">Rerun night</label>
-        <select id="f-rerun-day" name="rerunDay"></select></span>
-      <span class="f rerun-fields" id="rerun-time-field" hidden><label for="f-rerun-time">Rerun time</label>
-        <input id="f-rerun-time" name="rerunTime" type="time" value="15:00"></span>
       <span class="f f-submit"><button type="submit">Add show</button></span>
     </form>
 
+    <p class="note" id="appt-status" aria-live="polite"></p>
     <ul id="appt-list"></ul>
   </section>
 
@@ -93,7 +83,7 @@
       <summary>Channels, start times and nights off</summary>
       <div class="panel">
         <h3>Channels</h3>
-        <p class="note">Three channels every night. The count is fixed at three. The start times are not.</p>
+        <p class="note">Two movies every night, the feature and the late movie. The count is fixed at two. The start times are not.</p>
         <div id="channels"></div>
       </div>
       <div class="panel">

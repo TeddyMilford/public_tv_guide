@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   parseCsv, parseWatchlist, mergeItems, buildGuide, buildSpan, startOfWeek, addDays,
   isoDate, formatTime, channelFor, weekRangeLabel, itemKey,
+  nextShowSlot, nextRerunSlot, showSlotIndex, DEFAULT_CHANNEL_TIMES,
 } from '../js/guide.js';
 import { SAMPLE_CSV, SAMPLE_SHOW } from '../js/sample.js';
 
@@ -12,7 +13,7 @@ const test = (name, fn) => {
   catch (err) { console.error(`FAIL  ${name}\n      ${err.message}`); process.exitCode = 1; }
 };
 
-const LANES = ['18:00', '19:00', '20:00'];
+const LANES = ['20:00', '22:00'];
 const nights = [
   { enabled: true, times: [], filter: '' },            // Sunday is the show's night
   { enabled: true, times: LANES, filter: '' },
@@ -23,7 +24,7 @@ const nights = [
   { enabled: false, times: LANES, filter: '' },        // Saturday off
 ];
 
-// A pool big enough that four weeks of 15 listings never has to repeat itself.
+// A pool big enough that four weeks of 10 listings never has to repeat itself.
 const bigPool = Array.from({ length: 80 }, (_, i) => ({
   key: itemKey(`Film ${i}`, 1970 + i), title: `Film ${i}`, year: String(1970 + i),
   type: 'movie', genres: ['Drama'], directors: [], runtime: 100, rating: '', url: '', source: 'imdb',
@@ -81,11 +82,12 @@ test('disabled nights stay dark', () => {
   assert.equal(guide.days[6].entries.length, 0);
 });
 
-test('every enabled night runs three channels at 6, 7 and 8', () => {
+test('every enabled night runs two movies, the feature and the late movie', () => {
   const monday = buildGuide(config).days[1];
-  assert.deepEqual(monday.entries.map(e => e.minutes), [18 * 60, 19 * 60, 20 * 60]);
-  assert.deepEqual(monday.entries.map(e => e.channel), [2, 4, 7]);
+  assert.deepEqual(monday.entries.map(e => e.minutes), [20 * 60, 22 * 60]);
+  assert.deepEqual(monday.entries.map(e => e.channel), [2, 4]);
   assert.deepEqual(monday.lanes.map(l => l.time), LANES);
+  assert.deepEqual(DEFAULT_CHANNEL_TIMES, LANES);
 });
 
 test('a channel keeps the same number every night of the run', () => {
@@ -98,8 +100,8 @@ test('a channel keeps the same number every night of the run', () => {
 test('a night can carry more than one show', () => {
   const many = [
     appointments[0],
-    { id: 'a2', title: 'Succession', network: 'HBO', day: 0, time: '22:00', runtime: 60, weekly: true },
-    { id: 'a3', title: 'Frasier', network: 'NBC', day: 0, time: '20:30', runtime: 30, weekly: true },
+    { id: 'a2', title: 'Succession', network: 'HBO', day: 0, time: '20:30', runtime: 60, weekly: true },
+    { id: 'a3', title: 'Frasier', network: 'NBC', day: 0, time: '18:30', runtime: 30, weekly: true },
   ];
   const sunday = buildGuide({ ...config, appointments: many }).days[0];
   assert.equal(sunday.shows.length, 3);
@@ -125,17 +127,18 @@ test('a show listing carries no season or episode', () => {
 test('a month of listings never repeats a film when the list is long enough', () => {
   const span = buildSpan({ ...config, start: weekStart, items: bigPool, weeks: 4 });
   assert.equal(span.weeks.length, 4);
-  assert.equal(span.listings, 60);          // 15 listings a week, four weeks
-  assert.equal(span.titles, 60);            // all distinct
+  assert.equal(span.listings, 40);          // 10 listings a week, four weeks
+  assert.equal(span.titles, 40);            // all distinct
   assert.equal(span.label, 'August 23–September 19, 2026');
 });
 
 test('a short list wraps around instead of leaving nights empty', () => {
   const span = buildSpan({ ...config, start: weekStart, weeks: 4 });
-  assert.equal(span.listings, 60);
-  assert.ok(span.titles < span.listings);   // 28 films cannot fill 60 listings
-  // Wrapping still works through nearly the whole list before doubling back.
-  assert.ok(span.titles >= span.poolSize - 2, `only used ${span.titles} of ${span.poolSize}`);
+  assert.equal(span.listings, 40);
+  assert.ok(span.titles < span.listings);   // 28 films cannot fill 40 listings
+  // Ten listings a week against 28 films wraps mid-run, so a few sit the month out.
+  // It should still reach most of the list rather than circling a handful of titles.
+  assert.ok(span.titles >= span.poolSize * 0.8, `only used ${span.titles} of ${span.poolSize}`);
 });
 
 test('a rerun airs a second time and is marked (R)', () => {
@@ -171,7 +174,7 @@ test('a night lean is honored as far as the pool allows', () => {
 test('an impossible lean falls back instead of leaving the night empty', () => {
   const picky = nights.map((n, i) => (i === 3 ? { ...n, filter: 'zzzz-nope' } : n));
   const wednesday = buildGuide({ ...config, nights: picky }).days[3];
-  assert.equal(wednesday.entries.length, 3);
+  assert.equal(wednesday.entries.length, 2);
 });
 
 test('watched films are not booked again', () => {
@@ -187,10 +190,45 @@ test('an empty list still yields seven days', () => {
 });
 
 test('channels air in parallel, so a long film can overrun the next start', () => {
-  const friday = buildGuide(config).days[5];
-  assert.equal(friday.entries.length, 3);
+  const long = bigPool.map(f => ({ ...f, runtime: 170 }));
+  const friday = buildGuide({ ...config, items: long }).days[5];
+  assert.equal(friday.entries.length, 2);
   const overlapping = friday.entries.some((e, i) => i > 0 && e.minutes < friday.entries[i - 1].endMinutes);
-  assert.ok(overlapping, 'three lanes at 6, 7 and 8 should overlap on runtime');
+  assert.ok(overlapping, 'a 170 minute feature at 8 should still be running at 10');
+});
+
+// ------------------------------------------------- shows place themselves
+
+test('the first show goes out Sunday at seven, repeated Saturday afternoon', () => {
+  const slot = nextShowSlot([]);
+  assert.deepEqual(slot, { day: 0, time: '19:00' });
+  assert.deepEqual(nextRerunSlot([]), { day: 6, time: '13:00' });
+});
+
+test('shows spread across the home nights before doubling up on one', () => {
+  const list = [];
+  for (let i = 0; i < 7; i++) {
+    const slot = nextShowSlot(list);
+    list.push({ id: `s${i}`, day: slot.day, time: slot.time, rerun: nextRerunSlot(list) });
+  }
+  // Sunday through Thursday at seven, then back round to Sunday at seven thirty.
+  assert.deepEqual(list.map(a => a.day), [0, 1, 2, 3, 4, 0, 1]);
+  assert.deepEqual(list.map(a => a.time),
+    ['19:00', '19:00', '19:00', '19:00', '19:00', '19:30', '19:30']);
+  // Nothing lands on Friday or Saturday night, when you are out.
+  assert.ok(list.every(a => a.day !== 5 && a.day !== 6));
+  // Every repeat is a distinct Saturday afternoon slot, always after the premiere.
+  assert.equal(new Set(list.map(a => `${a.rerun.day}|${a.rerun.time}`)).size, 6);
+  assert.ok(list.every(a => a.rerun.day === 6));
+});
+
+test('moving a show steps to the next free night instead of standing still', () => {
+  const list = [
+    { id: 'a', day: 0, time: '19:00' },
+    { id: 'b', day: 1, time: '19:00' },
+  ];
+  const moved = nextShowSlot(list.filter(a => a.id !== 'a'), showSlotIndex(0, '19:00'));
+  assert.deepEqual(moved, { day: 2, time: '19:00' });   // skips Monday, which is taken
 });
 
 test('clock and label formatting reads like a listings page', () => {

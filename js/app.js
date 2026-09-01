@@ -1,6 +1,7 @@
 import {
   WEEKDAYS, parseWatchlist, mergeItems, buildSpan, startOfWeek, addDays,
   isoDate, parseIsoDate, formatTime, longDate, channelForLane, DEFAULT_CHANNEL_TIMES,
+  nextShowSlot, nextRerunSlot, showSlotIndex,
 } from './guide.js';
 import { SAMPLE_CSV, SAMPLE_SHOW } from './sample.js';
 import { THEMES, themeById } from './themes.js';
@@ -20,7 +21,7 @@ phone.addEventListener('change', armClip);
 
 const STORAGE_KEY = 'tv-guide-v3';
 const SAMPLE_SHOW_ID = 'sample-show';
-const CHANNEL_COUNT = 3;   // fixed at three
+const CHANNEL_COUNT = 2;   // fixed at two
 const $ = sel => document.querySelector(sel);
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -242,10 +243,13 @@ function renderSettings() {
           <span class="appt-meta">${escapeHtml(a.network || 'no network')} &middot; ${
             a.weekly === false
               ? `once, week of ${shortDate(parseIsoDate(a.anchorWeek))}`
-              : `every ${WEEKDAYS[a.day]}`} at ${formatTime(toMinutes(a.time))} &middot; ${a.runtime} min${
-            a.rerun ? ` &middot; rerun ${WEEKDAYS[a.rerun.day]} at ${formatTime(toMinutes(a.rerun.time))}` : ''}</span>
+              : `${WEEKDAYS[a.day]}s`} at ${formatTime(toMinutes(a.time))}${
+            a.rerun ? ` &middot; repeat ${WEEKDAYS[a.rerun.day]} at ${formatTime(toMinutes(a.rerun.time))}` : ''}</span>
         </span>
-        <button type="button" class="link" data-remove="${a.id}">Remove</button>
+        <span class="appt-acts">
+          <button type="button" class="link" data-move="${a.id}">Move</button>
+          <button type="button" class="link" data-remove="${a.id}">Remove</button>
+        </span>
       </li>`).join('')
     : `<li class="empty">No shows added.</li>`;
 
@@ -327,39 +331,52 @@ $('#clear-list-btn').addEventListener('click', () => {
   renderAll();
 });
 
+const slotLine = (title, day, time, rerun) =>
+  `${title} airs ${WEEKDAYS[day]}s at ${formatTime(toMinutes(time))}${
+    rerun ? `, repeated ${WEEKDAYS[rerun.day]} at ${formatTime(toMinutes(rerun.time))}` : ''}.`;
+
+// You bring the title. The night, the time and the repeat are the guide's job.
 $('#appt-form').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const f = new FormData(ev.target);
   const title = String(f.get('title')).trim();
   if (!title) return;
+  const slot = nextShowSlot(state.appointments);
+  const rerun = nextRerunSlot(state.appointments);
   state.appointments.push({
     id: newId(),
     title,
     network: String(f.get('network')).trim(),
-    day: Number(f.get('day')),
-    time: String(f.get('time')) || '21:00',
-    runtime: Number(f.get('runtime')) || 60,
-    weekly: f.get('weekly') === 'on',
-    rerun: f.get('hasRerun') === 'on'
-      ? { day: Number(f.get('rerunDay')), time: String(f.get('rerunTime')) || '15:00' }
-      : null,
+    day: slot.day,
+    time: slot.time,
+    runtime: 60,
+    weekly: true,
+    rerun,
     anchorWeek: state.weekStart,
   });
   save();
   ev.target.reset();
-  ev.target.elements.time.value = '21:00';
-  ev.target.elements.runtime.value = 60;
-  ev.target.elements.weekly.checked = true;
-  ev.target.elements.hasRerun.checked = false;
-  $('#rerun-fields').hidden = true;
-  $('#rerun-time-field').hidden = true;
+  $('#appt-status').textContent = slotLine(title, slot.day, slot.time, rerun);
   renderAll();
 });
 
 $('#appt-list').addEventListener('click', (ev) => {
-  const id = ev.target.dataset.remove;
-  if (!id) return;
-  state.appointments = state.appointments.filter(a => a.id !== id);
+  const { remove, move } = ev.target.dataset;
+  if (remove) {
+    state.appointments = state.appointments.filter(a => a.id !== remove);
+    $('#appt-status').textContent = '';
+  } else if (move) {
+    const appt = state.appointments.find(a => a.id === move);
+    if (!appt) return;
+    // Not a form, just the next night along, so moving one stays a single click.
+    const slot = nextShowSlot(
+      state.appointments.filter(a => a.id !== move), showSlotIndex(appt.day, appt.time));
+    appt.day = slot.day;
+    appt.time = slot.time;
+    $('#appt-status').textContent = slotLine(appt.title, slot.day, slot.time, appt.rerun);
+  } else {
+    return;
+  }
   save();
   renderAll();
 });
@@ -417,12 +434,6 @@ $('#themes').addEventListener('click', (ev) => {
   renderAll();
 });
 
-$('#f-hasrerun').addEventListener('change', (ev) => {
-  const on = ev.target.checked;
-  $('#rerun-fields').hidden = !on;
-  $('#rerun-time-field').hidden = !on;
-});
-
 $('#show-times').addEventListener('change', (ev) => {
   state.showTimes = ev.target.checked;
   save();
@@ -466,10 +477,6 @@ $('#print-btn').addEventListener('click', () => window.print());
 
 // -------------------------------------------------------------------- init
 
-const dayOptions = (selected) => WEEKDAYS
-  .map((d, i) => `<option value="${i}"${i === selected ? ' selected' : ''}>${d}</option>`).join('');
-$('#appt-form').elements.day.innerHTML = dayOptions(0);
-$('#appt-form').elements.rerunDay.innerHTML = dayOptions(6);
 $('#span-weeks').value = String(state.spanWeeks);
 $('#show-times').checked = state.showTimes !== false;
 
