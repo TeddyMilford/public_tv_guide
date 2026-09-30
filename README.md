@@ -1,12 +1,11 @@
 # TV Guide
 
-Turns a Letterboxd or IMDb watchlist into a printable month of television. Three
-channels a night, two weeks to a page.
+Turns a Letterboxd or IMDb watchlist into a printable month of television. Two
+movies a night, two weeks to a page.
 
 You already picked these films. This decides which night each one is on.
 
-One page, no build step, no framework, no account. Plain HTML, one stylesheet, four
-ES modules, nothing loaded over the network.
+One page, no build step, no framework. Plain HTML, one stylesheet, four ES modules.
 
 Desktop only. Under 52rem the page is replaced by a clip of Ron Swanson at a computer
 and a line telling you to go and use one. The clip is `img/swanson.webp`, 1.0MB,
@@ -16,7 +15,7 @@ on screen, so desktop never requests it.
 ## Running it
 
     python3 -m http.server 8000    # then open http://localhost:8000
-    node tests/smoke.mjs           # 22 assertions on parsing, rotation, clock, dates
+    node tests/smoke.mjs           # 25 assertions on parsing, rotation, slots, clock, dates
 
 The modules use `import`, so `file://` will not work without a server.
 
@@ -28,21 +27,33 @@ so you can see the format before loading anything.
 
 ## How the guide is built
 
-Three channels run every night, by default at 6, 7 and 8. The count is fixed at three;
-the times are editable. A channel keeps its number for the whole run, so Channel 4 is
-always the 7 o'clock slot. Films overlap when a runtime crosses the next start time,
+Two movies run every night, by default at 8 and 10: the feature and the late movie.
+The count is fixed at two; the times are editable. Two is a decision somebody made for
+you, where three is a grid. A channel keeps its number for the whole run, so Channel 4
+is always the late slot. Films overlap when a runtime crosses the next start time,
 which is what parallel channels do.
 
 Unwatched films are shuffled once into a stable order seeded by the list itself, so
 reloading gives back the same month. Each night's channels draw from a fixed window of
 that order, and the window advances by one week's worth of listings every calendar
-week. Nothing repeats until the list has been used up. Seven nights times three
-channels is 21 listings a week, so a 140 film watchlist runs six weeks before it
-repeats. The footer reports how much of the list a given span actually used.
+week. Nothing repeats until the list has been used up. Seven nights times two channels
+is 14 listings a week, so a 140 film watchlist runs ten weeks before it repeats. The
+footer reports how much of the list a given span actually used.
 
-Shows are unlimited: any number, on any night, at any time, several on the same night.
-A show runs every week or once on the week you added it, and can carry a rerun on
-another night, marked `(R)`. There are no season or episode numbers.
+Adding a show is a title and nothing else. The guide picks the night and the time,
+because a show you have to schedule is a show you talk yourself out of. It goes out at
+seven on a night you are likely to be home — Sunday through Thursday, never Friday or
+Saturday evening — and nights fill before times do, so the second show gets its own
+night rather than crowding the first. Past five shows the grid stacks to 7:30, then 8
+and 8:30.
+
+Every show is weekly and every show carries a repeat, Saturday afternoon from one
+o'clock, marked `(R)`. Saturday afternoon is both the classic slot and the one place
+in the week that always falls after the premiere, so the repeat is a real second
+chance rather than a preview. There are no season or episode numbers.
+
+`Move` in the show list steps a show to the next free night, which is one click rather
+than a form. `js/guide.js` holds the grid as `SHOW_SLOTS` and `RERUN_SLOTS`.
 
 Themes (`js/themes.js`) filter one night to a genre and print their name in that
 night's band: Sunday Night Movie, Sunday Scaries, Noir Monday, Comedy Tuesday, Western
@@ -68,8 +79,8 @@ footnotes are suppressed.
 
 The styling is cheap to print. Day bands are bold caps between two rules rather than
 solid reversed bars, and channel numbers are outlined boxes rather than filled squares.
-Measured on page one of the default four-week guide, mean ink coverage is 6.9 percent,
-down from 15.1 percent with the solid bands.
+Measured on the three-channel layout this replaced, that took mean ink coverage on page
+one from 15.1 percent to 6.9 percent. Two movies a night prints lighter again.
 
 ## Files
 
@@ -92,7 +103,7 @@ The guide is set like a printed listings page. Condensed faces (`Arial Narrow` a
 fallbacks) for times, channel numbers, day bands and the `MOVIE-Crime` heads; Georgia
 for the bodies; one accent, `#c8102e`, on the masthead mark, the theme name and the
 cross-off on hover. The repeating element is the channel bullet, a small outlined box,
-which is what lets three parallel channels read in a column this narrow. Each listing
+which is what lets parallel channels read in a column this narrow. Each listing
 is a four-column grid, so bodies hang under themselves and the cross-off does not
 reflow the line above.
 

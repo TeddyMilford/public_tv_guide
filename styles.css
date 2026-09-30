@@ -122,7 +122,6 @@ input, select, textarea {
 .f-check label { color: var(--ink); }
 #f-title { width: 13rem; }
 #f-network { width: 9rem; }
-#f-runtime { width: 5rem; }
 
 #appt-list { list-style: none; margin: 0; padding: 0; font-size: 0.9375rem; max-width: var(--prose); }
 #appt-list li {
@@ -131,6 +130,7 @@ input, select, textarea {
 }
 #appt-list li.empty { color: var(--muted); font-size: 0.875rem; }
 .appt-meta { display: block; font-size: 0.8125rem; color: var(--muted); }
+.appt-acts { display: flex; gap: 0.75rem; flex: none; align-self: start; }
 
 /* themes */
 
